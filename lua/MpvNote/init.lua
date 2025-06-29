@@ -81,6 +81,13 @@ function M.open_temp()
     return
   end
 
+  -- check if file exists
+  local file_stat = vim.loop.fs_stat(path)
+  if not (file_stat and file_stat.type == "file") then
+    vim.notify("file not found: " .. path, vim.log.levels.ERROR)
+    return
+  end
+
   local socket = M.config.socket
 
   -- command
