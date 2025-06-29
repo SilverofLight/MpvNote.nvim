@@ -76,6 +76,14 @@ function M.open_temp()
     'echo \'{"command": ["seek", %s, "absolute"]}\' | socat - %s',
     time, socket
   )
+  local pause_cmd = string.format(
+    'echo \'{"command": ["set_property", "pause", true]}\' | socat - %s > /dev/null 2>&1',
+    socket
+  )
+  local resume_cmd = string.format(
+    'echo \'{"command": ["set_property", "pause", false]}\' | socat - %s > /dev/null 2>&1',
+    socket
+  )
 
   local load = vim.fn.system(load_cmd)
 
@@ -85,7 +93,9 @@ function M.open_temp()
     os.execute(new_mpv_cmd)
   end
 
+  vim.fn.system(pause_cmd)
   vim.fn.system(seek_cmd)
+  vim.fn.system(resume_cmd)
 
   vim.notify(string.format("Opening: %s @ %s", path, time), vim.log.levels.INFO)
 end
