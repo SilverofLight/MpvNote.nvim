@@ -31,10 +31,20 @@
 在你的 init.lua 或 plugins/*.lua 中添加：
 
 ```lua
-require("MpvNote").setup({
-  socket = "/tmp/mpvsocket",          -- mpv socket 路径
-  clipboard_cmd = "wl-copy"           -- 复制命令，支持 wl-copy、pbcopy、xclip 等
-})
+return {
+  "SilverofLight/MpvNote.nvim",
+  lazy = true,
+  cmd = { "MpvCopyStamp", "MpvPasteStamp", "MpvOpenStamp" },
+  opts = {
+    socket = "/tmp/mpvsocket", -- your socket file
+    clipboard_cmd = "wl-copy" -- your clipboard tool command
+  },
+
+  -- set your keybindings below
+  vim.keymap.set("n", "<leader>mn", "<cmd>MpvCopyStamp<CR>", { desc = "Copy Mpv Note" }),
+  vim.keymap.set("n", "<leader>mp", "<cmd>MpvPasteStamp<CR>", { desc = "Paste Mpv Note" }),
+  vim.keymap.set("n", "<leader>mo", "<cmd>MpvOpenStamp<CR>", { desc = "Open Mpv Note" })
+}
 ```
 
 3. 提供的命令
