@@ -60,13 +60,6 @@ function M.open_temp()
 
   local socket = M.config.socket
 
-  -- ensure the socket exists
-  local stat = vim.loop.fs_stat(socket)
-  if not (stat and stat.type == "socket") then
-    vim.notify("mpv socket not exists", vim.log.levels.ERROR)
-    return
-  end
-
   -- command
   local load_cmd = string.format(
     'echo \'{"command": ["loadfile", %q]}\' | socat - %s',
@@ -85,12 +78,20 @@ function M.open_temp()
     socket
   )
 
-  local load = vim.fn.system(load_cmd)
-
-  if load:match("Connection refused") then
-    vim.notify("mpv server not running, opening a new one", vim.log.levels.WARN)
+  -- ensure the socket exists
+  local stat = vim.loop.fs_stat(socket)
+  if not (stat and stat.type == "socket") then
+    vim.notify("mpv socket not exists, creating a new one", vim.log.levels.WARN)
     local new_mpv_cmd = "mpv --input-ipc-server=" .. socket .. " \"" .. path .. "\" > /dev/null 2>&1 &"
     os.execute(new_mpv_cmd)
+  else
+    local load = vim.fn.system(load_cmd)
+
+    if load:match("Connection refused") then
+      vim.notify("mpv server not running, opening a new one", vim.log.levels.WARN)
+      local new_mpv_cmd = "mpv --input-ipc-server=" .. socket .. " \"" .. path .. "\" > /dev/null 2>&1 &"
+      os.execute(new_mpv_cmd)
+    end
   end
 
   vim.fn.system(pause_cmd)
