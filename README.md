@@ -1,34 +1,40 @@
 # 📼 MpvNote.nvim
 
-一个为 Neovim 用户设计的小型插件，用于与 mpv 播放器交互，记录并回放视频时间戳。适用于剪辑笔记、课程记录、片段标注等场景。
+English/[中文](./src/README.md)
 
-# ✨ 插件功能
-📋 复制时间戳：从 mpv 获取当前播放路径与时间戳，并复制为标准格式到剪贴板
+A lightweight plugin designed for Neovim users to interact with the mpv media player, allowing you to record and replay video timestamps. Ideal for clip notes, course annotations, segment tagging, and more.
 
-📝 粘贴时间戳：将时间戳插入当前文件为新的一行
+# ✨ Features
 
-🎬 打开时间戳：点击时间戳可直接唤起 mpv 跳转播放该片段
+📋 Copy Timestamp: Get the current playback path and timestamp from mpv, then copy it to the clipboard in a standard format.
 
-# 🧩 时间戳格式
-插件使用统一的时间戳格式：
+📝 Paste Timestamp: Insert the timestamp as a new line into the current file.
 
+🎬 Open Timestamp: Click on a timestamp to directly launch mpv and jump to that segment.
+
+# 🧩 Timestamp Format
+
+The plugin uses a unified timestamp format:
+
+```
 ["/path/to/video.mp4" ; 192.360]
+```
 
-第一个字段为视频路径
+The first field is the video path
 
-第二个字段为时间（秒），保留三位小数
+The second field is the time (in seconds), precise to three decimal places
 
-# 🚀 使用方式
+# 🚀 Usage
 
-1. 启动 mpv 并启用 socket 控制
+1. Start mpv with IPC socket control enabled
 
 `mpv --input-ipc-server=/path/to/your/socket_file "/path/to/your/video"`
 
-`socket_file` 默认为 `/tmp/mpvsocket`
+The default `socket_file` is `/tmp/mpvsocket`.
 
-2. 配置插件
+2. Configure the plugin
 
-在你的 init.lua 或 plugins/*.lua 中添加：
+Using Lazy.nvim
 
 ```lua
 return {
@@ -47,47 +53,47 @@ return {
 }
 ```
 
-3. 提供的命令
+3. Available Commands
 
 `:MpvCopyStamp`
 
-从 mpv 获取当前时间戳并复制到剪贴板
+Get the current timestamp from mpv and copy it to the clipboard.
 
 `:MpvPasteStamp`
 
-从 mpv 获取时间戳并插入为当前行下的一行
+Get the timestamp and insert it as a new line below the current line.
 
 `:MpvOpenStamp`
 
-如果光标所在行为标准格式的时间戳，会调用 mpv 播放对应位置
+If the cursor is on a properly formatted timestamp, this command will trigger mpv to play the corresponding segment.
 
-若 mpv 没有运行，将自动以后台方式启动并跳转播放
+If mpv is not running, it will be automatically launched in the background and jump to the timestamp.
 
-# 🛠 注意事项
+# 🛠 Requirements
 
-插件依赖以下命令可用：
+Make sure the following tools are available:
 
-mpv（需开启 --input-ipc-server）
+mpv (with --input-ipc-server enabled)
 
-socat（用于 socket 通信）
+socat (for socket communication)
 
-剪贴板工具（如 wl-copy、pbcopy 等）
+A clipboard tool (like wl-copy, pbcopy, etc.)
 
-插件使用 JSON 通信协议，确保 mpv 版本支持 IPC。
+The plugin uses the JSON IPC protocol. Ensure your mpv version supports it.
 
-# 📌 示例使用流程
+# 📌 Example Workflow
 
 ![gif](./src/mpvNote.gif)
 
-在想记录的片段，运行 :MpvCopyStamp
+Run `:MpvCopyStamp` at the segment you want to mark
 
-粘贴到 markdown/笔记中 :MpvPasteStamp
+Paste it into your markdown/notes using `:MpvPasteStamp`
 
-随时光标移动到某行，使用 :MpvOpenStamp 回放该片段
+Move the cursor to any timestamp line and replay the clip using `:MpvOpenStamp`
 
-# 📚 未来计划
+# 📚 Roadmap
 
-支持多 socket / 多实例管理
+Support for multi-socket / multi-instance management
 
 # 📄 License
 
