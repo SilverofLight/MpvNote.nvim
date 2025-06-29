@@ -98,7 +98,6 @@ function M.setup(opts)
     local stamp = M.get_timestamp()
 
     if not (stamp and stamp.path and stamp.time) then
-      vim.notify("MpvNote: failed to get timestamp", vim.log.levels.WARN)
       return
     end
     local output = string.format("[\"%s\" ; %.3f]", stamp.path, stamp.time)
