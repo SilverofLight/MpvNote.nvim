@@ -77,7 +77,7 @@ socat（用于 socket 通信）
 
 # 📌 示例使用流程
 
-TODO: 用 mpv 播放视频
+![gif](./src/mpvNote.gif)
 
 在想记录的片段，运行 :MpvCopyStamp
 
