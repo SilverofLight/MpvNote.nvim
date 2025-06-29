@@ -89,7 +89,7 @@ function M.open_temp()
 
   if load:match("Connection refused") then
     vim.notify("mpv server not running, opening a new one", vim.log.levels.WARN)
-    local new_mpv_cmd = "mpv --input-ipc-server=" .. socket .. " " .. path .. " > /dev/null 2>&1 &"
+    local new_mpv_cmd = "mpv --input-ipc-server=" .. socket .. " \"" .. path .. "\" > /dev/null 2>&1 &"
     os.execute(new_mpv_cmd)
   end
 
