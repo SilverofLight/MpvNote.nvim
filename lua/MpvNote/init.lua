@@ -47,6 +47,29 @@ function M.extract_data(response)
   return parsed.data
 end
 
+local function wait_for_mpv_socket(socket, timeout_sec)
+  local ping_cmd = string.format(
+    'echo \'{"command": ["get_property", "time-pos"]}\' | socat - %s',
+    socket
+  )
+
+  local wait_time = 0
+  local interval = 0.1
+  local max_time = timeout_sec or 3
+
+  while wait_time < max_time do
+    local result = vim.fn.system(ping_cmd)
+    if result and result:match('"error"%s*:%s*"success"') then
+      return true
+    end
+    local sleep_cmd = interval .. "sleep"
+    vim.cmd(sleep_cmd)
+    wait_time = wait_time + interval
+  end
+
+  return false
+end
+
 function M.open_temp()
   local line = vim.api.nvim_get_current_line()
 
@@ -84,6 +107,10 @@ function M.open_temp()
     vim.notify("mpv socket not exists, creating a new one", vim.log.levels.WARN)
     local new_mpv_cmd = "mpv --input-ipc-server=" .. socket .. " \"" .. path .. "\" > /dev/null 2>&1 &"
     os.execute(new_mpv_cmd)
+    if not wait_for_mpv_socket(socket, 3) then
+      vim.notify("MpvNote: Failed to create mpv socket", vim.log.levels.ERROR)
+      return
+    end
   else
     local load = vim.fn.system(load_cmd)
 
@@ -91,6 +118,10 @@ function M.open_temp()
       vim.notify("mpv server not running, opening a new one", vim.log.levels.WARN)
       local new_mpv_cmd = "mpv --input-ipc-server=" .. socket .. " \"" .. path .. "\" > /dev/null 2>&1 &"
       os.execute(new_mpv_cmd)
+      if not wait_for_mpv_socket(socket, 3) then
+        vim.notify("MpvNote: Failed to open mpv", vim.log.levels.ERROR)
+        return
+      end
     end
   end
 
