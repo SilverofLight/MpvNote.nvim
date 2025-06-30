@@ -196,7 +196,7 @@ local function MpvHover()
   snacks.image.placement.new(float_buf, image_path, { inline = true, ops = { 1, 0 } })
   vim.api.nvim_buf_set_option(float_buf, "modifiable", true)
 
-  vim.api.nvim_create_autocmd("CursorMoved", {
+  vim.api.nvim_create_autocmd({ "CursorMoved", "BufUnload" }, {
     group = vim.api.nvim_create_augroup("MpvNoteHover", { clear = true }),
     once = true,
     callback = function()
