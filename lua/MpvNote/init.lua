@@ -1,45 +1,52 @@
 local M = {}
 local command = vim.api.nvim_create_user_command
 
+-- default configration
 M.config = {
-  socket = "/tmp/mpvsocket",
-  clipboard_cmd = "wl-copy",
-  width = nil,
-  height = nil,
+  socket = "/tmp/mpvsocket", -- default socket path for mpv IPC
+  clipboard_cmd = "wl-copy", -- default clipboard comman (wayland)
+  width = nil,               -- default hover image width
+  height = nil,              -- default hover image height
 }
 
-function M.get_timestamp()
-  local time_json_cmd = '{ "command": ["get_property", "time-pos"], "log": false }'
-  local path_json_cmd = '{ "command": ["get_property", "path"], "log": false }'
-  local socket = M.config.socket
-
-  local get_time_cmd = string.format('echo %q | socat - %s', time_json_cmd, socket)
-  local get_path_cmd = string.format('echo %q | socat - %s', path_json_cmd, socket)
-
-  local time_result_json = vim.fn.system(get_time_cmd)
-  local path_result_json = vim.fn.system(get_path_cmd)
-
-  if time_result_json:match("Connection refused") or path_result_json:match("Connection refused") then
-    vim.notify("mpv server not running", vim.log.levels.WARN)
-    return nil
-  end
-
-  local stamp = { time = time_result_json, path = path_result_json }
-
-  local path = M.extract_data(path_result_json)
-  if path then
-    stamp.path = path
-  end
-
-  local time = M.extract_data(time_result_json)
-  if time then
-    stamp.time = time
-  end
-
-  return stamp
+-- execute command in mpv via socket
+local function mpv_command(cmd_data)
+  local json_cmd = vim.fn.json_encode(cmd_data)
+  local cmd = string.format('echo %q | socat - %s', json_cmd, M.config.socket)
+  return vim.fn.system(cmd)
 end
 
-function M.extract_data(response)
+-- wait for mpv socket to become available
+local function wait_for_mpv_socket(timeout)
+  local socket = M.config.socket
+  local wait_time = 0
+  local interval = 0.1
+  local max_time = timeout or 3
+
+  while wait_time < max_time do
+    -- ping
+    local result = mpv_command({ command = { "get_property", "time-pos" } })
+    if result and not result:match("Connection refused") then
+      return true
+    end
+    vim.cmd(interval .. "sleep")
+    wait_time = wait_time + interval
+  end
+
+  return false
+end
+
+-- start mpv instance with specified media file
+local function start_mpv(path)
+  local socket = M.config.socket
+  local cmd = string.format("mpv --input-ipc-server=%s \"%s\" > /dev/null 2>&1 &", socket, path)
+  os.execute(cmd)
+  -- wait for socket to become available
+  return wait_for_mpv_socket(3)
+end
+
+-- extract data from mpv JSON response
+local function extract_data(response)
   local ok, parsed = pcall(vim.fn.json_decode, response)
   if not ok then
     vim.notify("JSON extract failed: " .. response, vim.log.levels.ERROR)
@@ -49,98 +56,72 @@ function M.extract_data(response)
   return parsed.data
 end
 
-local function wait_for_mpv_socket(socket, timeout_sec)
-  local ping_cmd = string.format(
-    'echo \'{"command": ["get_property", "time-pos"]}\' | socat - %s',
-    socket
-  )
+-- get current playback timestamp and path from mpv
+local function get_timestamp()
+  local time_result = mpv_command({ command = { "get_property", "time-pos" }, log = false })
+  local path_result = mpv_command({ command = { "get_property", "path" }, log = false })
 
-  local wait_time = 0
-  local interval = 0.1
-  local max_time = timeout_sec or 3
-
-  while wait_time < max_time do
-    local result = vim.fn.system(ping_cmd)
-    if result and result:match('"error"%s*:%s*"success"') then
-      return true
-    end
-    local sleep_cmd = interval .. "sleep"
-    vim.cmd(sleep_cmd)
-    wait_time = wait_time + interval
+  if time_result:match("Connection refused") or path_result:match("Connection refused") then
+    vim.notify("mpv server not running", vim.log.levels.WARN)
+    return nil
   end
 
-  return false
+  return {
+    time = extract_data(time_result),
+    path = extract_data(path_result)
+  }
 end
 
-function M.open_temp()
-  local line = vim.api.nvim_get_current_line()
-
-  -- match format ["path" ; time]
+-- parse timestamp line in format: ["path" ; time]]
+local function parse_stamp_line(line)
   local path, time = line:match('%["(.-)"%s*;%s*(%d+%.?%d*)%]')
+  if not path or not time then
+    vim.notify("format not matched: [\"path\" ; time]", vim.log.levels.WARN)
+    return nil, nil
+  end
+
+  -- ensure file exists
+  if not (vim.loop.fs_stat(path) and vim.loop.fs_stat(path).type == "file") then
+    vim.notify("file not found: " .. path, vim.log.levels.ERROR)
+    return nil, nil
+  end
+
+  return path, tonumber(time)
+end
+
+-- open media at timestamp form current line
+local function open_temp()
+  local path, time = parse_stamp_line(vim.api.nvim_get_current_line())
 
   if not path or not time then
     vim.notify("format not matched: [\"path\" ; time]", vim.log.levels.WARN)
     return
   end
 
-  -- check if file exists
-  local file_stat = vim.loop.fs_stat(path)
-  if not (file_stat and file_stat.type == "file") then
-    vim.notify("file not found: " .. path, vim.log.levels.ERROR)
-    return
-  end
-
   local socket = M.config.socket
 
-  -- command
-  local load_cmd = string.format(
-    'echo \'{"command": ["loadfile", %q]}\' | socat - %s',
-    path, socket
-  )
-  local seek_cmd = string.format(
-    'echo \'{"command": ["seek", %s, "absolute"]}\' | socat - %s',
-    time, socket
-  )
-  local pause_cmd = string.format(
-    'echo \'{"command": ["set_property", "pause", true]}\' | socat - %s > /dev/null 2>&1',
-    socket
-  )
-  local resume_cmd = string.format(
-    'echo \'{"command": ["set_property", "pause", false]}\' | socat - %s > /dev/null 2>&1',
-    socket
-  )
-
   -- ensure the socket exists
-  local stat = vim.loop.fs_stat(socket)
-  if not (stat and stat.type == "socket") then
-    vim.notify("mpv socket not exists, creating a new one", vim.log.levels.WARN)
-    local new_mpv_cmd = "mpv --input-ipc-server=" .. socket .. " \"" .. path .. "\" > /dev/null 2>&1 &"
-    os.execute(new_mpv_cmd)
-    if not wait_for_mpv_socket(socket, 3) then
-      vim.notify("MpvNote: Failed to create mpv socket", vim.log.levels.ERROR)
-      return
-    end
-  else
-    local load = vim.fn.system(load_cmd)
+  local socket_stat = vim.loop.fs_stat(socket)
 
-    if load:match("Connection refused") then
+  if not (socket_stat and socket_stat.type == "socket") then
+    vim.notify("mpv socket not exists, creating a new one", vim.log.levels.WARN)
+    if not start_mpv(path) then return end
+  else
+    local result = mpv_command({ command = { "loadfile", path } })
+    if result:match("Connection refused") then
       vim.notify("mpv server not running, opening a new one", vim.log.levels.WARN)
-      local new_mpv_cmd = "mpv --input-ipc-server=" .. socket .. " \"" .. path .. "\" > /dev/null 2>&1 &"
-      os.execute(new_mpv_cmd)
-      if not wait_for_mpv_socket(socket, 3) then
-        vim.notify("MpvNote: Failed to open mpv", vim.log.levels.ERROR)
-        return
-      end
+      if not start_mpv(path) then return end
     end
   end
 
-  vim.fn.system(pause_cmd)
-  vim.fn.system(seek_cmd)
-  vim.fn.system(resume_cmd)
+  mpv_command({ command = { "set_property", "pause", true } })
+  mpv_command({ command = { "seek", time, "absolute" } })
+  mpv_command({ command = { "set_property", "pause", false } })
 
   vim.notify(string.format("Opening: %s @ %s", path, time), vim.log.levels.INFO)
 end
 
+-- get image dimensions using ffprobe
 local function get_image_size(path)
   local cmd = string.format(
     "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 %q",
@@ -155,21 +136,11 @@ local function get_image_size(path)
   end
 end
 
-function M.MpvHover()
-  local line = vim.api.nvim_get_current_line()
-
-  -- match format ["path" ; time]
-  local path, time = line:match('%["(.-)"%s*;%s*(%d+%.?%d*)%]')
-
-  if not path or not time then
+-- show media snapshot in floating window
+local function MpvHover()
+  local path, time = parse_stamp_line(vim.api.nvim_get_current_line())
+  if not path then
     vim.notify("format not matched: [\"path\" ; time]", vim.log.levels.WARN)
-    return
-  end
-
-  -- check if file exists
-  local file_stat = vim.loop.fs_stat(path)
-  if not (file_stat and file_stat.type == "file") then
-    vim.notify("file not found: " .. path, vim.log.levels.ERROR)
     return
   end
 
@@ -218,7 +189,7 @@ function M.MpvHover()
 
   local float_win = vim.api.nvim_open_win(float_buf, false, opts)
 
-  snacks.image.placement.new(float_buf, image_path, { inline = true, ops = {1, 0} })
+  snacks.image.placement.new(float_buf, image_path, { inline = true, ops = { 1, 0 } })
   vim.api.nvim_buf_set_option(float_buf, "modifiable", true)
 
   vim.api.nvim_create_autocmd("CursorMoved", {
@@ -246,7 +217,7 @@ function M.setup(opts)
 
   -- INFO: copy stamp to clipboard
   command("MpvCopyStamp", function()
-    local stamp = M.get_timestamp()
+    local stamp = get_timestamp()
 
     if not (stamp and stamp.path and stamp.time) then
       return
@@ -261,7 +232,7 @@ function M.setup(opts)
 
   -- INFO: paste stamp to current file directly
   command("MpvPasteStamp", function()
-    local stamp = M.get_timestamp()
+    local stamp = get_timestamp()
 
     if not (stamp and stamp.path and stamp.time) then
       vim.notify("MpvNote: failed to get timestamp", vim.log.levels.WARN)
@@ -274,10 +245,10 @@ function M.setup(opts)
   end, { desc = "paste stamp at this position" })
 
   -- INFO: play stamps in mpv
-  command("MpvOpenStamp", M.open_temp, { desc = "open stamped path in mpv" })
+  command("MpvOpenStamp", open_temp, { desc = "open stamped path in mpv" })
 
   -- INFO: display image with snacks.nvim
-  command("MpvHover", M.MpvHover, { desc = "hover snapshot from stamp" })
+  command("MpvHover", MpvHover, { desc = "hover snapshot from stamp" })
 end
 
 return M
