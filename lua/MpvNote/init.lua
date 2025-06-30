@@ -3,7 +3,9 @@ local command = vim.api.nvim_create_user_command
 
 M.config = {
   socket = "/tmp/mpvsocket",
-  clipboard_cmd = "wl-copy"
+  clipboard_cmd = "wl-copy",
+  width = nil,
+  height = nil,
 }
 
 function M.get_timestamp()
@@ -139,6 +141,106 @@ function M.open_temp()
   vim.notify(string.format("Opening: %s @ %s", path, time), vim.log.levels.INFO)
 end
 
+local function get_image_size(path)
+  local cmd = string.format(
+    "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 %q",
+    path
+  )
+  local output = vim.fn.system(cmd)
+  local width, height = output:match("(%d+)x(%d+)")
+  if width and height then
+    return tonumber(width), tonumber(height)
+  else
+    return nil, nil
+  end
+end
+
+function M.MpvHover()
+  local line = vim.api.nvim_get_current_line()
+
+  -- match format ["path" ; time]
+  local path, time = line:match('%["(.-)"%s*;%s*(%d+%.?%d*)%]')
+
+  if not path or not time then
+    vim.notify("format not matched: [\"path\" ; time]", vim.log.levels.WARN)
+    return
+  end
+
+  -- check if file exists
+  local file_stat = vim.loop.fs_stat(path)
+  if not (file_stat and file_stat.type == "file") then
+    vim.notify("file not found: " .. path, vim.log.levels.ERROR)
+    return
+  end
+
+  local seacks_ok, snacks = pcall(require, "snacks")
+
+  if not seacks_ok then
+    vim.notify("Snacks.nvim not found", vim.log.levels.ERROR)
+    return
+  end
+
+  local cache_dir = vim.fn.stdpath("cache")
+  local filename = "mpvhover_" .. tostring(os.time()) .. ".png"
+  local image_path = cache_dir .. "/" .. filename
+
+  -- generate png with ffmpeg
+  local ffmpeg_cmd = string.format(
+    'ffmpeg -y -ss %s -i "%s" -vframes 1 -q:v 2 "%s" 2>/dev/null',
+    time, path, image_path
+  )
+  os.execute(ffmpeg_cmd)
+
+  -- check png file
+  local img_stat = vim.loop.fs_stat(image_path)
+  if not (img_stat and img_stat.type == "file") then
+    vim.notify("Failed to generate png image", vim.log.levels.ERROR)
+    return
+  end
+
+  -- create floating window
+  local float_buf = vim.api.nvim_create_buf(false, true)
+
+  local opts = {
+    relative = "cursor",
+    row = 1,
+    col = 1,
+    width = 1,
+    height = 1,
+    focusable = false,
+    style = "minimal",
+    border = "rounded",
+  }
+  local image_width, image_height = get_image_size(image_path)
+
+  opts.width = M.width or math.floor(image_width / 30)
+  opts.height = M.height or math.floor(image_height / 60)
+
+  local float_win = vim.api.nvim_open_win(float_buf, false, opts)
+
+  snacks.image.placement.new(float_buf, image_path, { inline = true, ops = {1, 0} })
+  vim.api.nvim_buf_set_option(float_buf, "modifiable", true)
+
+  vim.api.nvim_create_autocmd("CursorMoved", {
+    group = vim.api.nvim_create_augroup("MpvNoteHover", { clear = true }),
+    once = true,
+    callback = function()
+      if float_win and vim.api.nvim_win_is_valid(float_win) then
+        vim.api.nvim_win_close(float_win, { force = true })
+        float_win = nil
+      end
+      if float_buf and vim.api.nvim_buf_is_valid(float_buf) then
+        vim.api.nvim_buf_delete(float_buf, { force = true })
+        float_buf = nil
+      end
+      if image_path then
+        os.remove(image_path)
+        image_path = nil
+      end
+    end,
+  })
+end
+
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 
@@ -173,6 +275,9 @@ function M.setup(opts)
 
   -- INFO: play stamps in mpv
   command("MpvOpenStamp", M.open_temp, { desc = "open stamped path in mpv" })
+
+  -- INFO: display image with snacks.nvim
+  command("MpvHover", M.MpvHover, { desc = "hover snapshot from stamp" })
 end
 
 return M

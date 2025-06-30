@@ -43,7 +43,9 @@ return {
   cmd = { "MpvCopyStamp", "MpvPasteStamp", "MpvOpenStamp" },
   opts = {
     socket = "/tmp/mpvsocket", -- your socket file
-    clipboard_cmd = "wl-copy" -- your clipboard tool command
+    clipboard_cmd = "wl-copy", -- your clipboard tool command
+    width = nil,
+    height = nil, -- MpvHover's size
   },
 
   -- set your keybindings below
@@ -69,6 +71,10 @@ return {
 
 若 mpv 没有运行，将自动以后台方式启动并跳转播放
 
+`:MpvHover`
+
+使用 Snacks.nvim 和 ffmpeg 提取并显示当前帧
+
 # 🛠 注意事项
 
 插件依赖以下命令可用：
@@ -78,6 +84,8 @@ mpv（需开启 --input-ipc-server）
 socat（用于 socket 通信）
 
 剪贴板工具（如 wl-copy、pbcopy 等）
+
+ffmpeg (可选)
 
 插件使用 JSON 通信协议，确保 mpv 版本支持 IPC。
 

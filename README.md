@@ -43,7 +43,9 @@ return {
   cmd = { "MpvCopyStamp", "MpvPasteStamp", "MpvOpenStamp" },
   opts = {
     socket = "/tmp/mpvsocket", -- your socket file
-    clipboard_cmd = "wl-copy" -- your clipboard tool command
+    clipboard_cmd = "wl-copy", -- your clipboard tool command
+    width = nil,
+    height = nil, -- MpvHover's size
   },
 
   -- set your keybindings below
@@ -69,6 +71,10 @@ If the cursor is on a properly formatted timestamp, this command will trigger mp
 
 If mpv is not running, it will be automatically launched in the background and jump to the timestamp.
 
+`:MpvHover`
+
+Extract current frame with ffmpeg and display with Snacks.nvim.
+
 # 🛠 Requirements
 
 Make sure the following tools are available:
@@ -78,6 +84,8 @@ mpv (with --input-ipc-server enabled)
 socat (for socket communication)
 
 A clipboard tool (like wl-copy, pbcopy, etc.)
+
+ffmpeg (optional)
 
 The plugin uses the JSON IPC protocol. Ensure your mpv version supports it.
 
