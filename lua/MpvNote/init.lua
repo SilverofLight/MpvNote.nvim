@@ -151,9 +151,13 @@ local function MpvHover()
     return
   end
 
-  local cache_dir = vim.fn.stdpath("cache")
+  local cache_dir = vim.fn.stdpath("cache") .. "/mpvhover"
   local filename = "mpvhover_" .. tostring(os.time()) .. ".png"
   local image_path = cache_dir .. "/" .. filename
+
+  if vim.fn.isdirectory(cache_dir) == 0 then
+    vim.fn.mkdir(cache_dir, "p")
+  end
 
   -- generate png with ffmpeg
   local ffmpeg_cmd = string.format(
