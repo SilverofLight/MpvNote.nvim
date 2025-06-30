@@ -40,7 +40,8 @@ Using Lazy.nvim
 return {
   "SilverofLight/MpvNote.nvim",
   lazy = true,
-  cmd = { "MpvCopyStamp", "MpvPasteStamp", "MpvOpenStamp" },
+  cmd = { "MpvCopyStamp", "MpvPasteStamp", "MpvOpenStamp", "MpvHover" },
+  dependencies = "folke/snacks.nvim", -- optional
   opts = {
     socket = "/tmp/mpvsocket", -- your socket file
     clipboard_cmd = "wl-copy", -- your clipboard tool command
@@ -85,7 +86,9 @@ socat (for socket communication)
 
 A clipboard tool (like wl-copy, pbcopy, etc.)
 
-ffmpeg (optional)
+ffmpeg (optional, for MpvHover)
+
+folke/snacks.nvim -> image (optional, for MpvHover)
 
 The plugin uses the JSON IPC protocol. Ensure your mpv version supports it.
 

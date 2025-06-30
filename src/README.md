@@ -40,7 +40,8 @@
 return {
   "SilverofLight/MpvNote.nvim",
   lazy = true,
-  cmd = { "MpvCopyStamp", "MpvPasteStamp", "MpvOpenStamp" },
+  cmd = { "MpvCopyStamp", "MpvPasteStamp", "MpvOpenStamp", "MpvHover" },
+  dependencies = "folke/snacks.nvim", -- optional
   opts = {
     socket = "/tmp/mpvsocket", -- your socket file
     clipboard_cmd = "wl-copy", -- your clipboard tool command
@@ -85,7 +86,9 @@ socat（用于 socket 通信）
 
 剪贴板工具（如 wl-copy、pbcopy 等）
 
-ffmpeg (可选)
+ffmpeg (可选, 用于 MpvHover)
+
+folke/snacks.nvim -> image (可选，用于 MpvHover)
 
 插件使用 JSON 通信协议，确保 mpv 版本支持 IPC。
 
