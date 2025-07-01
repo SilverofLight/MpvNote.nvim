@@ -76,6 +76,10 @@ return {
 
 使用 Snacks.nvim 和 ffmpeg 提取并显示当前帧
 
+`:MpvTogglePause`
+
+暂停和开始播放
+
 # 🛠 注意事项
 
 插件依赖以下命令可用：

@@ -76,6 +76,10 @@ If mpv is not running, it will be automatically launched in the background and j
 
 Extract current frame with ffmpeg and display with Snacks.nvim.
 
+`:MpvTogglePause`
+
+Just toggle pause/play
+
 # 🛠 Requirements
 
 Make sure the following tools are available:
