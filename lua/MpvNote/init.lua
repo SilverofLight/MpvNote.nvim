@@ -253,6 +253,11 @@ function M.setup(opts)
 
   -- INFO: display image with snacks.nvim
   command("MpvHover", MpvHover, { desc = "hover snapshot from stamp" })
+
+  -- INFO: toggle pause/play
+  command("MpvTogglePause", function()
+    mpv_command({ command = { "cycle", "pause" } })
+  end, { desc = "toggle pause/play" })
 end
 
 return M
