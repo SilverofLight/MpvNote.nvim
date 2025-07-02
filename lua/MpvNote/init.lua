@@ -80,6 +80,14 @@ local function parse_stamp_line(line)
     return nil, nil
   end
 
+  -- dicode ~ to HOME
+  if path and path:sub(1, 1) == "~" then
+    local home = os.getenv("HOME")
+    if home then
+      path = home .. path:sub(2)
+    end
+  end
+
   -- ensure file exists
   if not (vim.loop.fs_stat(path) and vim.loop.fs_stat(path).type == "file") then
     vim.notify("file not found: " .. path, vim.log.levels.ERROR)
