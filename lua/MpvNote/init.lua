@@ -66,9 +66,19 @@ local function get_timestamp()
     return nil
   end
 
+  local time = extract_data(time_result)
+  local path = extract_data(path_result)
+
+  if path then
+    local home_dir = os.getenv("HOME")
+    if home_dir and path:sub(1, #home_dir) == home_dir then
+      path = "~" .. path:sub(#home_dir + 1)
+    end
+  end
+
   return {
-    time = extract_data(time_result),
-    path = extract_data(path_result)
+    time = time,
+    path = path
   }
 end
 
