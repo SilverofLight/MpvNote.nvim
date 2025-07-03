@@ -26,13 +26,13 @@ The second field is the time (in seconds), precise to three decimal places
 
 # 🚀 Usage
 
-1. Start mpv with IPC socket control enabled
+## 1. Start mpv with IPC socket control enabled
 
 `mpv --input-ipc-server=/path/to/your/socket_file "/path/to/your/video"`
 
 The default `socket_file` is `/tmp/mpvsocket`.
 
-2. Configure the plugin
+## 2. Configure the plugin
 
 Using Lazy.nvim
 
@@ -56,29 +56,41 @@ return {
 }
 ```
 
-3. Available Commands
+## 3. Available Commands
 
-`:MpvCopyStamp`
+1. `:MpvCopyStamp`
 
 Get the current timestamp from mpv and copy it to the clipboard.
 
-`:MpvPasteStamp`
+2. `:MpvPasteStamp`
 
 Get the timestamp and insert it as a new line below the current line.
 
-`:MpvOpenStamp`
+3. `:MpvOpenStamp`
 
 If the cursor is on a properly formatted timestamp, this command will trigger mpv to play the corresponding segment.
 
 If mpv is not running, it will be automatically launched in the background and jump to the timestamp.
 
-`:MpvHover`
+4. `:MpvHover`
 
 Extract current frame with ffmpeg and display with Snacks.nvim.
 
-`:MpvTogglePause`
+5. `:MpvTogglePause`
 
 Just toggle pause/play
+
+6. `MpvNote.mpv_command()`
+
+Allow customize commands using `MpvNote.mpv_command()`. For Example:
+
+```lua
+local MpvNote = require("MpvNote")
+
+key.set("n", "<C-l>", function ()
+  MpvNote.mpv_command({ command = { "show-text", "HelloWorld" } })
+end)
+```
 
 # 🛠 Requirements
 

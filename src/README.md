@@ -26,13 +26,13 @@
 
 # 🚀 使用方式
 
-1. 启动 mpv 并启用 socket 控制
+## 1. 启动 mpv 并启用 socket 控制
 
 `mpv --input-ipc-server=/path/to/your/socket_file "/path/to/your/video"`
 
 `socket_file` 默认为 `/tmp/mpvsocket`
 
-2. 配置插件
+## 2. 配置插件
 
 使用 Lazy.nvim
 
@@ -56,29 +56,41 @@ return {
 }
 ```
 
-3. 提供的命令
+## 3. 提供的命令
 
-`:MpvCopyStamp`
+1. `:MpvCopyStamp`
 
 从 mpv 获取当前时间戳并复制到剪贴板
 
-`:MpvPasteStamp`
+2. `:MpvPasteStamp`
 
 从 mpv 获取时间戳并插入为当前行下的一行
 
-`:MpvOpenStamp`
+3. `:MpvOpenStamp`
 
 如果光标所在行为标准格式的时间戳，会调用 mpv 播放对应位置
 
 若 mpv 没有运行，将自动以后台方式启动并跳转播放
 
-`:MpvHover`
+4. `:MpvHover`
 
 使用 Snacks.nvim 和 ffmpeg 提取并显示当前帧
 
-`:MpvTogglePause`
+5. `:MpvTogglePause`
 
 暂停和开始播放
+
+6. `MpvNote.mpv_command()`
+
+使用 `MpvNote.mpv_command()` 自定义命令。例如：
+
+```lua
+local MpvNote = require("MpvNote")
+
+key.set("n", "<C-l>", function ()
+  MpvNote.mpv_command({ command = { "show-text", "HelloWorld" } })
+end)
+```
 
 # 🛠 注意事项
 
