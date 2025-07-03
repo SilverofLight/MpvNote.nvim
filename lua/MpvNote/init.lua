@@ -10,7 +10,7 @@ M.config = {
 }
 
 -- execute command in mpv via socket
-local function mpv_command(cmd_data)
+function M.mpv_command(cmd_data)
   local json_cmd = vim.fn.json_encode(cmd_data)
   local cmd = string.format('echo %q | socat - %s', json_cmd, M.config.socket)
   return vim.fn.system(cmd)
@@ -25,7 +25,7 @@ local function wait_for_mpv_socket(timeout)
 
   while wait_time < max_time do
     -- ping
-    local result = mpv_command({ command = { "get_property", "time-pos" } })
+    local result = M.mpv_command({ command = { "get_property", "time-pos" } })
     if result and not result:match("Connection refused") then
       return true
     end
@@ -58,8 +58,8 @@ end
 
 -- get current playback timestamp and path from mpv
 local function get_timestamp()
-  local time_result = mpv_command({ command = { "get_property", "time-pos" }, log = false })
-  local path_result = mpv_command({ command = { "get_property", "path" }, log = false })
+  local time_result = M.mpv_command({ command = { "get_property", "time-pos" }, log = false })
+  local path_result = M.mpv_command({ command = { "get_property", "path" }, log = false })
 
   if time_result:match("Connection refused") or path_result:match("Connection refused") then
     vim.notify("mpv server not running", vim.log.levels.WARN)
@@ -125,16 +125,16 @@ local function open_temp()
     vim.notify("mpv socket not exists, creating a new one", vim.log.levels.WARN)
     if not start_mpv(path) then return end
   else
-    local result = mpv_command({ command = { "loadfile", path } })
+    local result = M.mpv_command({ command = { "loadfile", path } })
     if result:match("Connection refused") then
       vim.notify("mpv server not running, opening a new one", vim.log.levels.WARN)
       if not start_mpv(path) then return end
     end
   end
 
-  mpv_command({ command = { "set_property", "pause", true } })
-  mpv_command({ command = { "seek", time, "absolute" } })
-  mpv_command({ command = { "set_property", "pause", false } })
+  M.mpv_command({ command = { "set_property", "pause", true } })
+  M.mpv_command({ command = { "seek", time, "absolute" } })
+  M.mpv_command({ command = { "set_property", "pause", false } })
 
   vim.notify(string.format("Opening: %s @ %s", path, time), vim.log.levels.INFO)
 end
@@ -274,7 +274,7 @@ function M.setup(opts)
 
   -- INFO: toggle pause/play
   command("MpvTogglePause", function()
-    mpv_command({ command = { "cycle", "pause" } })
+    M.mpv_command({ command = { "cycle", "pause" } })
   end, { desc = "toggle pause/play" })
 end
 
