@@ -98,7 +98,7 @@ folke/snacks.nvim -> image (可选，用于 MpvHover)
 
 # 📌 示例使用流程
 
-![gif](./mpvNote.gif)
+https://github.com/user-attachments/assets/db0b1ec6-065c-4c43-bd24-76317cf7e744
 
 在想记录的片段，运行 `:MpvCopyStamp`
 

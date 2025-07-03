@@ -98,7 +98,7 @@ The plugin uses the JSON IPC protocol. Ensure your mpv version supports it.
 
 # 📌 Example Workflow
 
-![gif](./src/mpvNote.gif)
+https://github.com/user-attachments/assets/db0b1ec6-065c-4c43-bd24-76317cf7e744
 
 Run `:MpvCopyStamp` at the segment you want to mark
 
