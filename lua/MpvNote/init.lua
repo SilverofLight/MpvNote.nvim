@@ -267,7 +267,7 @@ function M.pasteImage()
   local output = string.format("![](%s)", filename)
 
   local row = vim.api.nvim_win_get_cursor(0)[1]
-  vim.api.nvim_buf_set_lines(0, row - 1, row, false, { output })
+  vim.api.nvim_buf_set_lines(0, row, row, false, { output })
 end
 
 function M.setup(opts)
