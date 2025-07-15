@@ -234,6 +234,42 @@ local function MpvHover()
   })
 end
 
+function M.pasteImage()
+  local path, time = parse_stamp_line(vim.api.nvim_get_current_line())
+  if not path then
+    vim.notify("format not matched: [\"path\" ; time]", vim.log.levels.WARN)
+    return
+  end
+
+  local cache_dir = vim.fn.stdpath("cache") .. "/mpvhover/pasted"
+  local filename = "mpvhover_" .. tostring(os.time()) .. ".png"
+  local image_path = cache_dir .. "/" .. filename
+
+  if vim.fn.isdirectory(cache_dir) == 0 then
+    vim.fn.mkdir(cache_dir, "p")
+  end
+
+  -- generate png with ffmpeg
+  local ffmpeg_cmd = string.format(
+    'ffmpeg -y -ss %s -i "%s" -vframes 1 -q:v 2 "%s" 2>/dev/null',
+    time, path, image_path
+  )
+  os.execute(ffmpeg_cmd)
+
+  -- check png file
+  local img_stat = vim.loop.fs_stat(image_path)
+  if not (img_stat and img_stat.type == "file") then
+    vim.notify("Failed to generate png image", vim.log.levels.ERROR)
+    return
+  end
+
+
+  local output = string.format("![](%s)", filename)
+
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  vim.api.nvim_buf_set_lines(0, row - 1, row, false, { output })
+end
+
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 
@@ -276,6 +312,11 @@ function M.setup(opts)
   command("MpvTogglePause", function()
     M.mpv_command({ command = { "cycle", "pause" } })
   end, { desc = "toggle pause/play" })
+
+  -- INFO: paste detected image
+  command("MpvPasteImage", function()
+    M.pasteImage()
+  end, { desc = "paste detected image" })
 end
 
 return M

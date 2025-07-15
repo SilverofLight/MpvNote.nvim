@@ -78,9 +78,13 @@ Extract current frame with ffmpeg and display with Snacks.nvim.
 
 5. `:MpvTogglePause`
 
-Just toggle pause/play
+Just toggle pause/play.
 
-6. `MpvNote.mpv_command()`
+6. `:MpvPasteImage`
+
+Paste detected image to the next line with markdown format.
+
+7. `MpvNote.mpv_command()`
 
 Allow customize commands using `MpvNote.mpv_command()`. For Example:
 

@@ -80,7 +80,11 @@ return {
 
 暂停和开始播放
 
-6. `MpvNote.mpv_command()`
+6. `:MpvPasteImage`
+
+在下一行使用 markdown 格式粘贴生成的图片。
+
+7. `MpvNote.mpv_command()`
 
 使用 `MpvNote.mpv_command()` 自定义命令。例如：
 
