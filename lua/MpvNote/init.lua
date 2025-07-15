@@ -125,7 +125,8 @@ local function open_temp()
     vim.notify("mpv socket not exists, creating a new one", vim.log.levels.WARN)
     if not start_mpv(path) then return end
   else
-    local result = M.mpv_command({ command = { "loadfile", path } })
+    command = string.format("{ command = { \"loadfile\", \"%s\" } }", path)
+    local result = M.mpv_command(command)
     if result:match("Connection refused") then
       vim.notify("mpv server not running, opening a new one", vim.log.levels.WARN)
       if not start_mpv(path) then return end
