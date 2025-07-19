@@ -82,7 +82,7 @@ return {
 
 6. `:MpvPasteImage`
 
-在下一行使用 markdown 格式粘贴生成的图片。
+在这一行使用 markdown image 格式粘贴生成的图片。
 
 7. `MpvNote.mpv_command()`
 

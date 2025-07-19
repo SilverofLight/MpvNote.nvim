@@ -82,7 +82,7 @@ Just toggle pause/play.
 
 6. `:MpvPasteImage`
 
-Paste detected image to the next line with markdown format.
+Paste detected image at the current line with markdown image format.
 
 7. `MpvNote.mpv_command()`
 
