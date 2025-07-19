@@ -265,10 +265,10 @@ function M.pasteImage()
   end
 
 
-  local output = string.format("![](%s)", image_path)
+  local output = string.format("![\"%s\" ; %s](%s)", path, time, image_path)
 
   local row = vim.api.nvim_win_get_cursor(0)[1]
-  vim.api.nvim_buf_set_lines(0, row, row, false, { output })
+  vim.api.nvim_buf_set_lines(0, row - 1, row, false, { output })
 end
 
 function M.setup(opts)
